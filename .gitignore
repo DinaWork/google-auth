@@ -6,3 +6,5 @@ erl_crash.dump
 *.ez
 /config/*credentials*
 .elixir_ls/
+.idea
+*.iml

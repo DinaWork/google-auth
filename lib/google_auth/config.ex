@@ -1,6 +1,6 @@
-defmodule Goth.Config do
+defmodule GoogleAuth.Config do
   @moduledoc """
-  `Goth.Config` is a `GenServer` that holds the current configuration.
+  `GoogleAuth.Config` is a `GenServer` that holds the current configuration.
   This configuration is loaded from one of four places:
 
   1. a JSON string passed in via your application's config
@@ -10,35 +10,35 @@ defmodule Goth.Config do
   4. an `init/1` callback on a custom config module. This init function is
      passed the current config and must return an `{:ok, config}` tuple
 
-  The `Goth.Config` server exists mostly for other parts of your application
+  The `GoogleAuth.Config` server exists mostly for other parts of your application
   (or other libraries) to pull the current configuration state,
-  via `Goth.Config.get/1`. If necessary, you can also set config values via
-  `Goth.Config.set/2`
+  via `GoogleAuth.Config.get/1`. If necessary, you can also set config values via
+  `GoogleAuth.Config.set/2`
   """
 
   use GenServer
-  alias Goth.Client
+  alias GoogleAuth.Client
 
   # this using macro isn't actually necessary,
   defmacro __using__(_opts) do
     quote do
-      @behaviour Goth.Config
+      @behaviour GoogleAuth.Config
     end
   end
 
   @optional_callbacks init: 1
 
   @doc """
-  A callback executed when the Goth.Config server starts.
+  A callback executed when the GoogleAuth.Config server starts.
 
-  The sole argument is the `:goth` configuration as stored in the
+  The sole argument is the `:google_auth` configuration as stored in the
   application environment. It must return `{:ok, keyword}` with the updated
   list of configuration.
 
   To have your module's `init/1` callback called at startup, add your module
   as the `:config_module` in the application environment:
 
-      config :goth, config_module: MyConfig
+      config :google_auth, config_module: MyConfig
   """
   @callback init(config :: Keyword.t()) :: {:ok, Keyword.t()}
 
@@ -138,7 +138,7 @@ defmodule Goth.Config do
   # Search the well-known path for application default credentials provided
   # by the gcloud sdk. Note there are different paths for unix and windows.
   defp from_gcloud_adc(config) do
-    # config_root_dir = Application.get_env(:goth, :config_root_dir)
+    # config_root_dir = Application.get_env(:google_auth, :config_root_dir)
     config_root_dir = Keyword.get(config, :config_root_dir)
 
     path_root =

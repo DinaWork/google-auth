@@ -10,11 +10,11 @@ use Mix.Config
 
 # You can configure for your application as:
 #
-#     config :goth, key: :value
+#     config :google_auth, key: :value
 #
 # And access this configuration in your application as:
 #
-#     Application.get_env(:goth, :key)
+#     Application.get_env(:google_auth, :key)
 #
 # Or configure a 3rd-party app:
 #

@@ -1,9 +1,9 @@
-defmodule Goth.Client do
-  alias Goth.Config
-  alias Goth.Token
+defmodule GoogleAuth.Client do
+  alias GoogleAuth.Config
+  alias GoogleAuth.Token
 
   @moduledoc """
-  `Goth.Client` is the module through which all interaction with Google's APIs flows.
+  `GoogleAuth.Client` is the module through which all interaction with Google's APIs flows.
   For the most part, you probably don't want to use this module directly, but instead
   use the other modules that cache and wrap the underlying API calls.
 
@@ -25,12 +25,12 @@ defmodule Goth.Client do
   """
 
   @doc """
-  *Note:* Most often, you'll want to use `Goth.Token.for_scope/1` instead of this method.
-  As the docs for `Goth.Token.for_scope/1` note, it will return a cached token if one
+  *Note:* Most often, you'll want to use `GoogleAuth.Token.for_scope/1` instead of this method.
+  As the docs for `GoogleAuth.Token.for_scope/1` note, it will return a cached token if one
   already exists, thus saving you the cost of a round-trip to the server to generate a
   new token.
 
-  `Goth.Client.get_access_token/1`, on the other hand will always hit the server to
+  `GoogleAuth.Client.get_access_token/1`, on the other hand will always hit the server to
   retrieve a new token.
   """
 
@@ -55,8 +55,8 @@ defmodule Goth.Client do
 
   def get_access_token(:metadata, {service_account, scope}, _opts) do
     headers = [{"Metadata-Flavor", "Google"}]
-    account = Application.get_env(:goth, :metadata_account, "default")
-    metadata = Application.get_env(:goth, :metadata_url, "http://metadata.google.internal")
+    account = Application.get_env(:google_auth, :metadata_account, "default")
+    metadata = Application.get_env(:google_auth, :metadata_url, "http://metadata.google.internal")
     endpoint = "computeMetadata/v1/instance/service-accounts"
     url_base = "#{metadata}/#{endpoint}/#{account}"
 
@@ -68,7 +68,7 @@ defmodule Goth.Client do
   # Fetch an access token from Google's OAuth service using a JWT
   def get_access_token(:oauth_jwt, {account, scope}, opts) do
     %{sub: sub} = destruct_opts(opts)
-    endpoint = Application.get_env(:goth, :endpoint, "https://www.googleapis.com")
+    endpoint = Application.get_env(:google_auth, :endpoint, "https://www.googleapis.com")
     url = "#{endpoint}/oauth2/v4/token"
 
     body =
@@ -89,7 +89,7 @@ defmodule Goth.Client do
     {:ok, refresh_token} = Config.get(:refresh_token)
     {:ok, client_id} = Config.get(:client_id)
     {:ok, client_secret} = Config.get(:client_secret)
-    endpoint = Application.get_env(:goth, :endpoint, "https://www.googleapis.com")
+    endpoint = Application.get_env(:google_auth, :endpoint, "https://www.googleapis.com")
     url = "#{endpoint}/oauth2/v4/token"
 
     body =
@@ -158,7 +158,7 @@ defmodule Goth.Client do
   def retrieve_metadata_project do
     headers = [{"Metadata-Flavor", "Google"}]
     endpoint = "computeMetadata/v1/project/project-id"
-    metadata = Application.get_env(:goth, :metadata_url, "http://metadata.google.internal")
+    metadata = Application.get_env(:google_auth, :metadata_url, "http://metadata.google.internal")
     url = "#{metadata}/#{endpoint}"
     HTTPoison.get!(url, headers).body
   end

@@ -1,9 +1,9 @@
-defmodule Goth.Supervisor do
+defmodule GoogleAuth.Supervisor do
   @moduledoc false
 
   use Supervisor
-  alias Goth.Config
-  alias Goth.TokenStore
+  alias GoogleAuth.Config
+  alias GoogleAuth.TokenStore
 
   def start_link(envs) do
     Supervisor.start_link(__MODULE__, envs, name: __MODULE__)

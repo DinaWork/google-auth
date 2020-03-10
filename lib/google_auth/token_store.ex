@@ -1,14 +1,14 @@
-defmodule Goth.TokenStore do
+defmodule GoogleAuth.TokenStore do
   @moduledoc """
-  The `Goth.TokenStore` is a simple `GenServer` that manages storage and retrieval
-  of tokens `Goth.Token`. When adding to the token store, it also queues tokens
+  The `GoogleAuth.TokenStore` is a simple `GenServer` that manages storage and retrieval
+  of tokens `GoogleAuth.Token`. When adding to the token store, it also queues tokens
   for a refresh before they expire: ten seconds before the token is set to expire,
   the `TokenStore` will call the API to get a new token and replace the expired
   token in the store.
   """
 
   use GenServer
-  alias Goth.Token
+  alias GoogleAuth.Token
 
   def start_link do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
@@ -19,7 +19,7 @@ defmodule Goth.TokenStore do
   end
 
   @doc ~S"""
-  Store a token in the `TokenStore`. Upon storage, Goth will queue the token
+  Store a token in the `TokenStore`. Upon storage, GoogleAuth will queue the token
   to be refreshed ten seconds before its expiration.
   """
   @spec store(Token.t()) :: pid
@@ -44,12 +44,12 @@ defmodule Goth.TokenStore do
   @doc ~S"""
   Retrieve a token from the `TokenStore`.
 
-      token = %Goth.Token{type:    "Bearer",
+      token = %GoogleAuth.Token{type:    "Bearer",
                           token:   "123",
                           scope:   "scope",
                           expires: :os.system_time(:seconds) + 3600}
-      Goth.TokenStore.store(token)
-      {:ok, ^token} = Goth.TokenStore.find(token.scope)
+      GoogleAuth.TokenStore.store(token)
+      {:ok, ^token} = GoogleAuth.TokenStore.find(token.scope)
   """
   @spec find({String.t() | atom(), String.t()} | String.t(), String.t() | nil) ::
           {:ok, Token.t()} | :error
@@ -77,7 +77,7 @@ defmodule Goth.TokenStore do
 
   defp filter_expired(:error, _), do: :error
 
-  defp filter_expired({:ok, %Goth.Token{expires: expires}}, system_time)
+  defp filter_expired({:ok, %GoogleAuth.Token{expires: expires}}, system_time)
        when expires < system_time,
        do: :error
 

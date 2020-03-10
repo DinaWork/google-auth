@@ -1,11 +1,11 @@
-defmodule Goth.TokenTest do
+defmodule GoogleAuth.TokenTest do
   use ExUnit.Case
-  alias Goth.Token
+  alias GoogleAuth.Token
 
   setup do
     bypass = Bypass.open()
-    Application.put_env(:goth, :endpoint, "http://localhost:#{bypass.port}")
-    Application.put_env(:goth, :token_source, :oauth)
+    Application.put_env(:google_auth, :endpoint, "http://localhost:#{bypass.port}")
+    Application.put_env(:google_auth, :token_source, :oauth)
     {:ok, bypass: bypass}
   end
 
@@ -70,22 +70,22 @@ defmodule Goth.TokenTest do
   end
 
   test "it will not raise when token cannot be retrieved from the API" do
-    orig = Application.get_env(:goth, :endpoint)
-    Application.put_env(:goth, :endpoint, "http://lkjoine.lkj")
+    orig = Application.get_env(:google_auth, :endpoint)
+    Application.put_env(:google_auth, :endpoint, "http://lkjoine.lkj")
     assert {:error, _} = Token.for_scope("lkjlkjlkj")
-    Application.put_env(:goth, :endpoint, orig)
+    Application.put_env(:google_auth, :endpoint, orig)
   end
 
   test "it will pull a token for a specific account", %{bypass: bypass} do
     # The test configuration sets an example JSON blob. We override it briefly
     # during this test.
-    current_json = Application.get_env(:goth, :json)
+    current_json = Application.get_env(:google_auth, :json)
     new_json = "test/data/test-multicredentials.json" |> Path.expand() |> File.read!()
 
-    Application.put_env(:goth, :json, new_json, persistent: true)
-    Application.stop(:goth)
+    Application.put_env(:google_auth, :json, new_json, persistent: true)
+    Application.stop(:google_auth)
 
-    Application.start(:goth)
+    Application.start(:google_auth)
 
     Bypass.expect(bypass, fn conn ->
       Plug.Conn.resp(
@@ -115,10 +115,10 @@ defmodule Goth.TokenTest do
              )
 
     # Restore original config
-    Application.put_env(:goth, :json, current_json, persistent: true)
+    Application.put_env(:google_auth, :json, current_json, persistent: true)
     System.delete_env("GOOGLE_APPLICATION_CREDENTIALS")
-    Application.stop(:goth)
-    Application.start(:goth)
+    Application.stop(:google_auth)
+    Application.start(:google_auth)
   end
 
   test "it will pull a token from the token store if cached", %{bypass: bypass} do

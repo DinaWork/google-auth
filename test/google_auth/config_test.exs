@@ -1,6 +1,6 @@
-defmodule Goth.ConfigTest do
+defmodule GoogleAuth.ConfigTest do
   use ExUnit.Case
-  alias Goth.Config
+  alias GoogleAuth.Config
 
   def check_config(map) do
     check_config(map, fn key -> Config.get(key) end)
@@ -17,7 +17,7 @@ defmodule Goth.ConfigTest do
   setup do
     bypass = Bypass.open()
     bypass_url = "http://localhost:#{bypass.port}"
-    Application.put_env(:goth, :metadata_url, bypass_url)
+    Application.put_env(:google_auth, :metadata_url, bypass_url)
     {:ok, bypass: bypass}
   end
 
@@ -66,39 +66,39 @@ defmodule Goth.ConfigTest do
   end
 
   test "Config can start up with no config when disabled" do
-    saved_config = Application.get_all_env(:goth)
+    saved_config = Application.get_all_env(:google_auth)
     try do
       [:json, :metadata_url, :config_root_dir]
-      |> Enum.each(&Application.delete_env(:goth, &1))
-      Application.put_env(:goth, :disabled, true, persistent: true)
+      |> Enum.each(&Application.delete_env(:google_auth, &1))
+      Application.put_env(:google_auth, :disabled, true, persistent: true)
 
-      {:ok, pid} = GenServer.start_link(Goth.Config, saved_config)
+      {:ok, pid} = GenServer.start_link(GoogleAuth.Config, saved_config)
       assert Process.alive?(pid)
     after
-      Application.delete_env(:goth, :disabled)
+      Application.delete_env(:google_auth, :disabled)
       Enum.each(saved_config, fn {k, v} ->
-        Application.put_env(:goth, k, v, persistent: true)
+        Application.put_env(:google_auth, k, v, persistent: true)
       end)
     end
   end
 
-  test "Goth correctly retrieves project IDs from metadata", %{bypass: bypass} do
+  test "GoogleAuth correctly retrieves project IDs from metadata", %{bypass: bypass} do
     # The test configuration sets an example JSON blob. We override it briefly
     # during this test.
-    current_json = Application.get_env(:goth, :json)
-    Application.put_env(:goth, :json, nil, persistent: true)
-    Application.stop(:goth)
+    current_json = Application.get_env(:google_auth, :json)
+    Application.put_env(:google_auth, :json, nil, persistent: true)
+    Application.stop(:google_auth)
 
     # Fake project response
     project = "test-project"
 
     Bypass.expect(bypass, fn conn ->
       uri = "/computeMetadata/v1/project/project-id"
-      assert(conn.request_path == uri, "Goth should ask for project ID")
+      assert(conn.request_path == uri, "GoogleAuth should ask for project ID")
       Plug.Conn.resp(conn, 200, project)
     end)
 
-    Application.start(:goth)
+    Application.start(:google_auth)
 
     assert(
       {:ok, :metadata} == Config.get(:token_source),
@@ -111,20 +111,20 @@ defmodule Goth.ConfigTest do
     )
 
     # Restore original config
-    Application.put_env(:goth, :json, current_json, persistent: true)
-    Application.stop(:goth)
-    Application.start(:goth)
+    Application.put_env(:google_auth, :json, current_json, persistent: true)
+    Application.stop(:google_auth)
+    Application.start(:google_auth)
   end
 
   test "GOOGLE_APPLICATION_CREDENTIALS is read" do
     # The test configuration sets an example JSON blob. We override it briefly
     # during this test.
-    current_json = Application.get_env(:goth, :json)
-    Application.put_env(:goth, :json, nil, persistent: true)
+    current_json = Application.get_env(:google_auth, :json)
+    Application.put_env(:google_auth, :json, nil, persistent: true)
     System.put_env("GOOGLE_APPLICATION_CREDENTIALS", "test/data/test-credentials-2.json")
-    Application.stop(:goth)
+    Application.stop(:google_auth)
 
-    Application.start(:goth)
+    Application.start(:google_auth)
 
     state =
       "test/data/test-credentials-2.json"
@@ -142,22 +142,22 @@ defmodule Goth.ConfigTest do
     assert {:ok, :oauth_jwt} == Config.get(:token_source)
 
     # Restore original config
-    Application.put_env(:goth, :json, current_json, persistent: true)
+    Application.put_env(:google_auth, :json, current_json, persistent: true)
     System.delete_env("GOOGLE_APPLICATION_CREDENTIALS")
-    Application.stop(:goth)
-    Application.start(:goth)
+    Application.stop(:google_auth)
+    Application.start(:google_auth)
   end
 
   test "multiple credentials are parsed correctly" do
     # The test configuration sets an example JSON blob. We override it briefly
     # during this test.
-    current_json = Application.get_env(:goth, :json)
+    current_json = Application.get_env(:google_auth, :json)
     new_json = "test/data/test-multicredentials.json" |> Path.expand() |> File.read!()
 
-    Application.put_env(:goth, :json, new_json, persistent: true)
-    Application.stop(:goth)
+    Application.put_env(:google_auth, :json, new_json, persistent: true)
+    Application.stop(:google_auth)
 
-    Application.start(:goth)
+    Application.start(:google_auth)
 
     state =
       "test/data/test-multicredentials.json"
@@ -175,31 +175,31 @@ defmodule Goth.ConfigTest do
     end)
 
     # Restore original config
-    Application.put_env(:goth, :json, current_json, persistent: true)
+    Application.put_env(:google_auth, :json, current_json, persistent: true)
     System.delete_env("GOOGLE_APPLICATION_CREDENTIALS")
-    Application.stop(:goth)
-    Application.start(:goth)
+    Application.stop(:google_auth)
+    Application.start(:google_auth)
   end
 
   test "gcloud default credentials are found", %{bypass: bypass} do
     # The test configuration sets an example JSON blob. We override it briefly
     # during this test.
-    current_json = Application.get_env(:goth, :json)
-    current_home = Application.get_env(:goth, :config_root_dir)
-    Application.put_env(:goth, :json, nil, persistent: true)
-    Application.put_env(:goth, :config_root_dir, "test/data/home", persistent: true)
-    Application.stop(:goth)
+    current_json = Application.get_env(:google_auth, :json)
+    current_home = Application.get_env(:google_auth, :config_root_dir)
+    Application.put_env(:google_auth, :json, nil, persistent: true)
+    Application.put_env(:google_auth, :config_root_dir, "test/data/home", persistent: true)
+    Application.stop(:google_auth)
 
     # Fake project response because the ADC doesn't embed a project.
     project = "test-project"
 
     Bypass.expect(bypass, fn conn ->
       uri = "/computeMetadata/v1/project/project-id"
-      assert(conn.request_path == uri, "Goth should ask for project ID")
+      assert(conn.request_path == uri, "GoogleAuth should ask for project ID")
       Plug.Conn.resp(conn, 200, project)
     end)
 
-    Application.start(:goth)
+    Application.start(:google_auth)
 
     state =
       "test/data/home/gcloud/application_default_credentials.json"
@@ -211,55 +211,55 @@ defmodule Goth.ConfigTest do
     assert {:ok, :oauth_refresh} == Config.get(:token_source)
 
     # Restore original config
-    Application.put_env(:goth, :json, current_json, persistent: true)
-    Application.put_env(:goth, :config_root_dir, current_home, persistent: true)
-    Application.stop(:goth)
-    Application.start(:goth)
+    Application.put_env(:google_auth, :json, current_json, persistent: true)
+    Application.put_env(:google_auth, :config_root_dir, current_home, persistent: true)
+    Application.stop(:google_auth)
+    Application.start(:google_auth)
   end
 
   test "project_id can be overridden in config" do
     project = "different"
-    Application.put_env(:goth, :project_id, project, persistent: true)
-    Application.stop(:goth)
+    Application.put_env(:google_auth, :project_id, project, persistent: true)
+    Application.stop(:google_auth)
 
-    Application.start(:goth)
+    Application.start(:google_auth)
     assert {:ok, project} == Config.get(:project_id)
 
-    Application.put_env(:goth, :project_id, nil, persistent: true)
-    Application.stop(:goth)
-    Application.start(:goth)
+    Application.put_env(:google_auth, :project_id, nil, persistent: true)
+    Application.stop(:google_auth)
+    Application.start(:google_auth)
   end
 
   test "project_id can be overridden by environment variables" do
     project_from_env = "different1"
     project_from_devshell = "different2"
     System.put_env("DEVSHELL_PROJECT_ID", project_from_devshell)
-    Application.stop(:goth)
+    Application.stop(:google_auth)
 
-    Application.start(:goth)
+    Application.start(:google_auth)
     assert {:ok, project_from_devshell} == Config.get(:project_id)
 
     System.put_env("GOOGLE_CLOUD_PROJECT", project_from_env)
-    Application.stop(:goth)
+    Application.stop(:google_auth)
 
-    Application.start(:goth)
+    Application.start(:google_auth)
     assert {:ok, project_from_env} == Config.get(:project_id)
 
     System.delete_env("DEVSHELL_PROJECT_ID")
     System.delete_env("GOOGLE_CLOUD_PROJECT")
-    Application.stop(:goth)
-    Application.start(:goth)
+    Application.stop(:google_auth)
+    Application.start(:google_auth)
   end
 
   test "the config_module is allowed to override config" do
-    Application.put_env(:goth, :config_module, Goth.TestConfigMod)
-    Application.stop(:goth)
+    Application.put_env(:google_auth, :config_module, GoogleAuth.TestConfigMod)
+    Application.stop(:google_auth)
 
-    Application.start(:goth)
-    assert {:ok, :val} == Goth.Config.get(:actor_email)
+    Application.start(:google_auth)
+    assert {:ok, :val} == GoogleAuth.Config.get(:actor_email)
 
-    Application.delete_env(:goth, :config_module)
-    Application.stop(:goth)
-    Application.start(:goth)
+    Application.delete_env(:google_auth, :config_module)
+    Application.stop(:google_auth)
+    Application.start(:google_auth)
   end
 end

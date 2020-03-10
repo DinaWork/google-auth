@@ -1,18 +1,18 @@
-defmodule Goth.ClientTest do
+defmodule GoogleAuth.ClientTest do
   use ExUnit.Case
-  alias Goth.Client
-  alias Goth.Token
+  alias GoogleAuth.Client
+  alias GoogleAuth.Token
 
   setup do
     bypass = Bypass.open()
     bypass_url = "http://localhost:#{bypass.port}"
-    Application.put_env(:goth, :endpoint, bypass_url)
-    Application.put_env(:goth, :metadata_url, bypass_url)
+    Application.put_env(:google_auth, :endpoint, bypass_url)
+    Application.put_env(:google_auth, :metadata_url, bypass_url)
     {:ok, bypass: bypass}
   end
 
   test "we include all necessary attributes in the JWT" do
-    {:ok, email} = Goth.Config.get(:client_email)
+    {:ok, email} = GoogleAuth.Config.get(:client_email)
     iat = :os.system_time(:seconds)
     exp = iat + 10
     scope = "prediction"
@@ -27,7 +27,7 @@ defmodule Goth.ClientTest do
   end
 
   test "iat is support in the JWT" do
-    {:ok, email} = Goth.Config.get(:client_email)
+    {:ok, email} = GoogleAuth.Config.get(:client_email)
     iat = :os.system_time(:seconds) + 20
     exp = iat + 10
     scope = "prediction"
@@ -45,7 +45,7 @@ defmodule Goth.ClientTest do
   end
 
   test "sub is support in the JWT" do
-    {:ok, email} = Goth.Config.get(:client_email)
+    {:ok, email} = GoogleAuth.Config.get(:client_email)
     iat = :os.system_time(:seconds) + 30
     exp = iat + 10
     scope = "prediction"
@@ -126,16 +126,16 @@ defmodule Goth.ClientTest do
     end)
 
     # Set up a temporary config with a refresh token
-    normal_json = Application.get_env(:goth, :json)
+    normal_json = Application.get_env(:google_auth, :json)
 
     refresh_json =
       "test/data/home/gcloud/application_default_credentials.json"
       |> Path.expand()
       |> File.read!()
 
-    Application.put_env(:goth, :json, refresh_json, persistent: true)
-    Application.stop(:goth)
-    Application.start(:goth)
+    Application.put_env(:google_auth, :json, refresh_json, persistent: true)
+    Application.stop(:google_auth)
+    Application.start(:google_auth)
 
     scope = "prediction"
 
@@ -147,9 +147,9 @@ defmodule Goth.ClientTest do
     assert %Token{token: ^at, type: ^tt, expires: _exp} = data
 
     # Restore original config
-    Application.put_env(:goth, :json, normal_json, persistent: true)
-    Application.stop(:goth)
-    Application.start(:goth)
+    Application.put_env(:google_auth, :json, normal_json, persistent: true)
+    Application.stop(:google_auth)
+    Application.start(:google_auth)
   end
 
   test "We call the metadata service correctly and decode the token", %{bypass: bypass} do
@@ -217,9 +217,9 @@ defmodule Goth.ClientTest do
   end
 
   test "returns {:error, err} when HTTP call fails hard" do
-    old_url = Application.get_env(:goth, :endpoint)
-    Application.put_env(:goth, :endpoint, "nnnnnopelkjlkj.nope")
+    old_url = Application.get_env(:google_auth, :endpoint)
+    Application.put_env(:google_auth, :endpoint, "nnnnnopelkjlkj.nope")
     assert {:error, _} = Client.get_access_token("my-scope")
-    Application.put_env(:goth, :endpoint, old_url)
+    Application.put_env(:google_auth, :endpoint, old_url)
   end
 end

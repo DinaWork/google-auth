@@ -1,12 +1,12 @@
-defmodule Goth.TokenStoreTest do
+defmodule GoogleAuth.TokenStoreTest do
   use ExUnit.Case
-  alias Goth.TokenStore
-  alias Goth.Token
+  alias GoogleAuth.TokenStore
+  alias GoogleAuth.Token
 
   setup do
     bypass = Bypass.open()
-    Application.put_env(:goth, :endpoint, "http://localhost:#{bypass.port}")
-    Application.put_env(:goth, :token_source, :oauth)
+    Application.put_env(:google_auth, :endpoint, "http://localhost:#{bypass.port}")
+    Application.put_env(:google_auth, :token_source, :oauth)
     {:ok, bypass: bypass}
   end
 
@@ -81,7 +81,7 @@ defmodule Goth.TokenStoreTest do
   # which go to sleep, it is not always happeneing
   test "find never returns stale tokens", %{bypass: _bypass} do
     token = %Token{scope: "expired", token: "stale", type: "Bearer", expires: 1}
-    {:ok, _pid} = GenServer.start_link(Goth.TokenStore, %{"expired" => token})
+    {:ok, _pid} = GenServer.start_link(GoogleAuth.TokenStore, %{"expired" => token})
     assert :error = TokenStore.find("expired")
   end
 

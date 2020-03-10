@@ -1,9 +1,9 @@
-defmodule Goth.Mixfile do
+defmodule GoogleAuth.Mixfile do
   use Mix.Project
 
   def project do
     [
-      app: :goth,
+      app: :google_auth,
       version: "1.2.0",
       description: description(),
       package: package(),
@@ -16,7 +16,7 @@ defmodule Goth.Mixfile do
 
   def application do
     [
-      mod: {Goth, []}
+      mod: {GoogleAuth, []}
     ]
   end
 
@@ -47,7 +47,7 @@ defmodule Goth.Mixfile do
     [
       maintainers: ["Phil Burrows"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/peburrows/goth"}
+      links: %{"GitHub" => "https://github.com/DinaWork/google-auth"}
     ]
   end
 end

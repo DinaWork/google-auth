@@ -1,20 +1,20 @@
-defmodule Goth.Token do
+defmodule GoogleAuth.Token do
   @moduledoc ~S"""
-  Interface for retrieving access tokens, from either the `Goth.TokenStore`
+  Interface for retrieving access tokens, from either the `GoogleAuth.TokenStore`
   or the Google token API. The first request for a token will hit the API,
-  but subsequent requests will retrieve the token from Goth's token store.
+  but subsequent requests will retrieve the token from GoogleAuth's token store.
 
-  Goth will automatically refresh access tokens in the background as necessary,
+  GoogleAuth will automatically refresh access tokens in the background as necessary,
   10 seconds before they are to expire. After the initial synchronous request to
   retrieve an access token, your application should never have to wait for a
   token again.
 
   The first call to retrieve an access token for a particular scope blocks while
-  it hits the API. Subsequent calls pull from the `Goth.TokenStore`,
+  it hits the API. Subsequent calls pull from the `GoogleAuth.TokenStore`,
   and should return immediately
 
-      iex> Goth.Token.for_scope("https://www.googleapis.com/auth/pubsub")
-      {:ok, %Goth.Token{token: "23984723",
+      iex> GoogleAuth.Token.for_scope("https://www.googleapis.com/auth/pubsub")
+      {:ok, %GoogleAuth.Token{token: "23984723",
                         type: "Bearer",
                         scope: "https://www.googleapis.com/auth/pubsub",
                         expires: 1453653825,
@@ -24,8 +24,8 @@ defmodule Goth.Token do
   the first parametter to be {client_email, scopes} to specify which account
   to target.
 
-      iex> Goth.Token.for_scope({"myaccount@project.iam.gserviceaccount.com", "https://www.googleapis.com/auth/pubsub"})
-      {:ok, %Goth.Token{token: "23984723",
+      iex> GoogleAuth.Token.for_scope({"myaccount@project.iam.gserviceaccount.com", "https://www.googleapis.com/auth/pubsub"})
+      {:ok, %GoogleAuth.Token{token: "23984723",
                         type: "Bearer",
                         scope: "https://www.googleapis.com/auth/pubsub",
                         expires: 1453653825,
@@ -35,12 +35,12 @@ defmodule Goth.Token do
   the `type` and `token` to create the authorization header. An example using
   [HTTPoison](https://hex.pm/packages/httpoison):
 
-      {:ok, token} = Goth.Token.for_scope("https://www.googleapis.com/auth/pubsub")
+      {:ok, token} = GoogleAuth.Token.for_scope("https://www.googleapis.com/auth/pubsub")
       HTTPoison.get(url, [{"Authorization", "#{token.type} #{token.token}"}])
   """
 
-  alias Goth.TokenStore
-  alias Goth.Client
+  alias GoogleAuth.TokenStore
+  alias GoogleAuth.Client
 
   @type t :: %__MODULE__{
           token: String.t(),
@@ -54,7 +54,7 @@ defmodule Goth.Token do
   defstruct [:token, :type, :scope, :sub, :expires, :account]
 
   @doc """
-  Get a `%Goth.Token{}` for a particular `scope`. `scope` can be a single
+  Get a `%GoogleAuth.Token{}` for a particular `scope`. `scope` can be a single
   scope or multiple scopes joined by a space. See [OAuth 2.0 Scopes for Google APIs](https://developers.google.com/identity/protocols/googlescopes) for all available scopes.
 
   `sub` needs to be specified if impersonation is used to prevent cache
@@ -62,7 +62,7 @@ defmodule Goth.Token do
 
   ## Example
       iex> Token.for_scope("https://www.googleapis.com/auth/pubsub")
-      {:ok, %Goth.Token{expires: ..., token: "...", type: "..."} }
+      {:ok, %GoogleAuth.Token{expires: ..., token: "...", type: "..."} }
   """
   def for_scope(info, sub \\ nil)
 
@@ -84,7 +84,7 @@ defmodule Goth.Token do
   end
 
   @doc """
-  Parse a successful JSON response from Google's token API and extract a `%Goth.Token{}`
+  Parse a successful JSON response from Google's token API and extract a `%GoogleAuth.Token{}`
   """
   def from_response_json(scope, sub \\ nil, json)
 
@@ -122,7 +122,7 @@ defmodule Goth.Token do
 
   @doc """
   Retrieve a new access token from the API. This is useful for expired tokens,
-  although `Goth` automatically handles refreshing tokens for you, so you should
+  although `GoogleAuth` automatically handles refreshing tokens for you, so you should
   rarely if ever actually need to call this method manually.
   """
   @spec refresh!(t() | {any(), any()}) :: {:ok, t()}
